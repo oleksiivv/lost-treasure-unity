@@ -8,6 +8,9 @@ using Yodo1.MAS;
 public class BaseUI : MonoBehaviour
 {
     public GameObject loadingPanel;
+    
+	private Yodo1U3dBannerAdView banner;
+
     public void openScene(int id){
         Time.timeScale=1;
         LastSavedPositionController.lastSavedPos=Vector3.zero;
@@ -36,13 +39,22 @@ public class BaseUI : MonoBehaviour
         SetDelegates();
         
 
-        StartCoroutine(BannerCoroutine());
-
-        if(Yodo1U3dMas.IsBannerAdLoaded()){
-            Yodo1U3dMas.ShowBannerAd();
-        }
-        
+		this.RequestBanner();
     }
+
+    private void RequestBanner()
+    {
+        // Clean up banner before reusing
+        if (banner != null)
+        {
+            banner.Destroy();
+        }
+
+        // Create a 320x50 banner at top of the screen
+        banner = new Yodo1U3dBannerAdView(Yodo1U3dBannerAdSize.Banner, Yodo1U3dBannerAdPosition.BannerTop | Yodo1U3dBannerAdPosition.BannerHorizontalCenter);
+
+		banner.LoadAd();
+	}
 
     private void SetPrivacy(bool gdpr, bool coppa, bool ccpa)
     {
@@ -64,7 +76,7 @@ public class BaseUI : MonoBehaviour
 
             if (success)
             {
-                StartCoroutine(BannerCoroutine());
+                //StartCoroutine(BannerCoroutine());
             }
             else
             {
@@ -108,22 +120,6 @@ public class BaseUI : MonoBehaviour
         });
     }
     bool isBannerShown = false;
-    IEnumerator BannerCoroutine()
-    {
-        yield return new WaitForSeconds(2.0f);
-        if (isBannerShown == false)
-        {
-            if (Yodo1U3dMas.IsBannerAdLoaded())
-            {
-                Yodo1U3dMas.ShowBannerAd();
-            }
-            else
-            {
-                StartCoroutine(BannerCoroutine());
-            }
-        }
-
-    }
 
 
      /*AdRequest AdRequestBuild(){

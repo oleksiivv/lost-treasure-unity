@@ -15,6 +15,9 @@ public class AdMobController : MonoBehaviour
 
     private string bannerId="ca-app-pub-4962234576866611/7512453814";
     //private string intersitionalId="ca-app-pub-4962234576866611/3893673397";*/
+    
+	private Yodo1U3dBannerAdView banner;
+
     void Start(){
         //MobileAds.Initialize(appId);
         //RequestConfigurationAd();
@@ -24,12 +27,22 @@ public class AdMobController : MonoBehaviour
         SetDelegates();
         
 
-        StartCoroutine(BannerCoroutine());
+        this.RequestBanner();
+    }
 
-        if(Yodo1U3dMas.IsBannerAdLoaded()){
-            Yodo1U3dMas.ShowBannerAd();
+    private void RequestBanner()
+    {
+        // Clean up banner before reusing
+        if (banner != null)
+        {
+            banner.Destroy();
         }
-        
+
+        // Create a 320x50 banner at top of the screen
+        banner = new Yodo1U3dBannerAdView(Yodo1U3dBannerAdSize.Banner, Yodo1U3dBannerAdPosition.BannerTop | Yodo1U3dBannerAdPosition.BannerHorizontalCenter);
+
+		banner.LoadAd();
+
     }
 
     private void SetPrivacy(bool gdpr, bool coppa, bool ccpa)
@@ -52,7 +65,7 @@ public class AdMobController : MonoBehaviour
 
             if (success)
             {
-                StartCoroutine(BannerCoroutine());
+                //StartCoroutine(BannerCoroutine());
             }
             else
             {
@@ -96,22 +109,7 @@ public class AdMobController : MonoBehaviour
         });
     }
     bool isBannerShown = false;
-    IEnumerator BannerCoroutine()
-    {
-        yield return new WaitForSeconds(2.0f);
-        if (isBannerShown == false)
-        {
-            if (Yodo1U3dMas.IsBannerAdLoaded())
-            {
-                Yodo1U3dMas.ShowBannerAd();
-            }
-            else
-            {
-                StartCoroutine(BannerCoroutine());
-            }
-        }
-
-    }
+    
 
     /*
      AdRequest AdRequestBuild(){

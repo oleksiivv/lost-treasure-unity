@@ -1,16 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-//using GoogleMobileAds.Api;
+using GoogleMobileAds.Api;
 using System;
-using Yodo1.MAS;
 
 public class BaseUI : MonoBehaviour
 {
     public GameObject loadingPanel;
     
-	private Yodo1U3dBannerAdView banner;
-
     public void openScene(int id){
         Time.timeScale=1;
         LastSavedPositionController.lastSavedPos=Vector3.zero;
@@ -18,191 +15,65 @@ public class BaseUI : MonoBehaviour
         Application.LoadLevel(id);
     }
 
-    /*private BannerView banner;
+#if UNITY_IOS
+    private string appId = "ca-app-pub-4962234576866611~2451698824";
+    private string bannerId="ca-app-pub-4962234576866611/9839152333";
+#else
+    private string appId = "ca-app-pub-4962234576866611~2451698824";
+    private string bannerId="ca-app-pub-4962234576866611/9839152333";
+#endif
 
-    private string appId="ca-app-pub-4962234576866611~2451698824";
-    private string bannerId="ca-app-pub-4962234576866611/7512453814";*/
-
-    // void Start(){
-    //     //MobileAds.Initialize(appId);
-    //     //RequestBannerAd();
-        
-    // }
-
+    private BannerView _bannerView;
     void Start(){
-        //MobileAds.Initialize(appId);
-        //RequestConfigurationAd();
-        //RequestBannerAd();
+        RequestConfiguration requestConfiguration =
+            new RequestConfiguration.Builder()
+            .SetSameAppKeyEnabled(true).build();
+        MobileAds.SetRequestConfiguration(requestConfiguration);
 
-        InitializeSdk();
-        SetPrivacy(true, false, false);
-        SetDelegates();
-        
-
-		this.RequestBanner();
+        MobileAds.Initialize(initStatus => {
+          CreateBannerView();
+          LoadBannerAd();
+        });
     }
 
-    private void RequestBanner()
+    //baner
+    public void CreateBannerView()
     {
-        // Clean up banner before reusing
-        if (banner != null)
+        Debug.Log("Creating banner view");
+
+        // If we already have a banner, destroy the old one.
+        if (_bannerView != null)
         {
-            banner.Destroy();
+            DestroyBannerView();
         }
 
         // Create a 320x50 banner at top of the screen
-        banner = new Yodo1U3dBannerAdView(Yodo1U3dBannerAdSize.Banner, Yodo1U3dBannerAdPosition.BannerTop | Yodo1U3dBannerAdPosition.BannerHorizontalCenter);
-
-		banner.LoadAd();
-	}
-
-    private void SetPrivacy(bool gdpr, bool coppa, bool ccpa)
-    {
-        Yodo1U3dMas.SetGDPR(gdpr);
-        Yodo1U3dMas.SetCOPPA(coppa);
-        Yodo1U3dMas.SetCCPA(ccpa);
+        _bannerView = new BannerView(bannerId, AdSize.Banner, AdPosition.Top);
     }
 
-    private void InitializeSdk()
+    public void LoadBannerAd()
     {
-        Yodo1U3dMas.InitializeSdk();
-    }
-
-    private void SetDelegates()
-    {
-        Yodo1U3dMas.SetInitializeDelegate((bool success, Yodo1U3dAdError error) =>
+        // create an instance of a banner view first.
+        if(_bannerView == null)
         {
-            Debug.Log("[Yodo1 Mas] InitializeDelegate, success:" + success + ", error: \n" + error.ToString());
+            CreateBannerView();
+        }
 
-            if (success)
-            {
-                //StartCoroutine(BannerCoroutine());
-            }
-            else
-            {
+        // create our request used to load the ad.
+        var adRequest = new AdRequest();
 
-            }
-        });
-
-        Yodo1U3dMas.SetBannerAdDelegate((Yodo1U3dAdEvent adEvent, Yodo1U3dAdError error) =>
-        {
-            Debug.Log("[Yodo1 Mas] BannerdDelegate:" + adEvent.ToString() + "\n" + error.ToString());
-            switch (adEvent)
-            {
-                case Yodo1U3dAdEvent.AdClosed:
-                    Debug.Log("[Yodo1 Mas] Banner ad has been closed.");
-                    break;
-                case Yodo1U3dAdEvent.AdOpened:
-                    Debug.Log("[Yodo1 Mas] Banner ad has been shown.");
-                    break;
-                case Yodo1U3dAdEvent.AdError:
-                    Debug.Log("[Yodo1 Mas] Banner ad error, " + error.ToString());
-                    break;
-            }
-        });
-
-        Yodo1U3dMas.SetInterstitialAdDelegate((Yodo1U3dAdEvent adEvent, Yodo1U3dAdError error) =>
-        {
-            Debug.Log("[Yodo1 Mas] InterstitialAdDelegate:" + adEvent.ToString() + "\n" + error.ToString());
-            switch (adEvent)
-            {
-                case Yodo1U3dAdEvent.AdClosed:
-                    Debug.Log("[Yodo1 Mas] Interstital ad has been closed.");
-                    break;
-                case Yodo1U3dAdEvent.AdOpened:
-                    Debug.Log("[Yodo1 Mas] Interstital ad has been shown.");
-                    break;
-                case Yodo1U3dAdEvent.AdError:
-                    Debug.Log("[Yodo1 Mas] Interstital ad error, " + error.ToString());
-                    break;
-            }
-
-        });
+        // send the request to load the ad.
+        Debug.Log("Loading banner ad.");
+        _bannerView.LoadAd(adRequest);
     }
-    bool isBannerShown = false;
 
-
-     /*AdRequest AdRequestBuild(){
-         return new AdRequest.Builder().Build();
-     }
-
-
-      /*void RequestConfigurationAd(){
-          intersitional=new InterstitialAd(intersitionalId);
-          AdRequest request=AdRequestBuild();
-          intersitional.LoadAd(request);
-
-          intersitional.OnAdLoaded+=this.HandleOnAdLoaded;
-          intersitional.OnAdOpening+=this.HandleOnAdOpening;
-          intersitional.OnAdClosed+=this.HandleOnAdClosed;
-
-      }
-
-
-      public bool showIntersitionalAd(){
-          if(intersitional.IsLoaded()){
-              intersitional.Show();
-
-              return true;
-          }
-
-          return false;
-      }
-
-      private void OnDestroy(){
-          DestroyIntersitional();
-
-          intersitional.OnAdLoaded-=this.HandleOnAdLoaded;
-          intersitional.OnAdOpening-=this.HandleOnAdOpening;
-          intersitional.OnAdClosed-=this.HandleOnAdClosed;
-
-      }
-
-      private void HandleOnAdClosed(object sender, EventArgs e)
-      {
-          intersitional.OnAdLoaded-=this.HandleOnAdLoaded;
-          intersitional.OnAdOpening-=this.HandleOnAdOpening;
-          intersitional.OnAdClosed-=this.HandleOnAdClosed;
-
-            RequestConfigurationAd();
-
-        
-      }
-
-      private void HandleOnAdOpening(object sender, EventArgs e)
+    public void DestroyBannerView()
     {
-        
-    }
-
-    private void HandleOnAdLoaded(object sender, EventArgs e)
-    {
-        
-    }
-
- 
-
-     public void DestroyIntersitional(){
-         intersitional.Destroy();
-     }
-
-     public void RequestBannerAd(){
-        banner=new BannerView(bannerId,AdSize.Banner,AdPosition.Bottom);
-        AdRequest request = AdRequestBannerBuild();
-        banner.LoadAd(request);
-    }
-
-    public void DestroyBanner(){
-        if(banner!=null){
-            banner.Destroy();
+        if (_bannerView != null)
+        {
+            Debug.Log("Destroying banner view.");
+            _bannerView.Destroy();
+            _bannerView = null;
         }
     }
-
-
-
-    AdRequest AdRequestBannerBuild(){
-        return new AdRequest.Builder().Build();
-    }*/
-
-    
-
 }

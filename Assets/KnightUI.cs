@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-//using UnityEngine.Advertisements;
-//using GoogleMobileAds.Api;
+using GoogleMobileAds.Api;
 using System;
-using Yodo1.MAS;
 
 public class KnightUI : MonoBehaviour
 {
@@ -17,13 +15,19 @@ public class KnightUI : MonoBehaviour
     public Text resultText;
 
     public Image[] hearts;
-    private string gameID="4155550";
 
-    private string appId="ca-app-pub-4962234576866611~2451698824";
+#if UNITY_IOS
+    private string appId = "ca-app-pub-4962234576866611~2451698824";
+    private string rewardedId = "ca-app-pub-4962234576866611/8362419131";
+#else
+    private string appId = "ca-app-pub-4962234576866611~2451698824";
+    private string rewardedId = "ca-app-pub-4962234576866611/8362419131";
+#endif
+
+    private BannerView _bannerView;
 
     void Start(){
         loadingPanel.SetActive(false);
-        //Advertisement.Initialize(gameID,false);
 
         loadingAdditionalLifePanel=loadingAdditionalLifePanel.GetComponent<Image>();
 
@@ -31,23 +35,20 @@ public class KnightUI : MonoBehaviour
             gameObject.transform.position = LastSavedPositionController.lastSavedPos;
         }
 
-        //MobileAds.Initialize(appId);
-        //InitAdmob();
+        RequestConfiguration requestConfiguration =
+            new RequestConfiguration.Builder()
+            .SetSameAppKeyEnabled(true).build();
+        MobileAds.SetRequestConfiguration(requestConfiguration);
 
-        InitializeSdk();
-        SetPrivacy(true, false, false);
-        SetDelegates();
+        MobileAds.Initialize(initStatus => {
+          InitAdmobRewarded();
+        });
     }
 
     public static int addCnt=0;
     public void pause(){
         Time.timeScale=0;
         pausePanel.SetActive(true);
-
-        // if(Yodo1U3dMas.IsInterstitialAdLoaded() && addCnt%2==1){
-        //     Yodo1U3dMas.ShowInterstitialAd();
-        // }
-        // addCnt++;
     }
 
     public void resume(){
@@ -74,8 +75,6 @@ public class KnightUI : MonoBehaviour
         StartCoroutine(showingAdditionalLifePanel());
     }
 
-
-
     public void skipAdditionalLifePanel(){
         additionalLifePanel.SetActive(false);
         diePanel.SetActive(true);
@@ -88,11 +87,6 @@ public class KnightUI : MonoBehaviour
                 PlayerPrefs.SetInt("Keykey (1)@"+Application.loadedLevel.ToString(),0);
                 PlayerPrefs.SetInt("Keykey (2)@"+Application.loadedLevel.ToString(),0);
         }
-
-        // if(Yodo1U3dMas.IsInterstitialAdLoaded() && addCnt%2==1){
-        //     Yodo1U3dMas.ShowInterstitialAd();
-        // }
-        // addCnt++;
     }
 
     private bool resumed=false;
@@ -114,223 +108,86 @@ public class KnightUI : MonoBehaviour
     }
 
     public void resumeByAd(){
-        //resumed=true;
-        /*if (Advertisement.IsReady("rewardedVideo"))
-        {
-            loadingSpeed=0;
-              var options = new ShowOptions { resultCallback = HandleShowResult };
-              Advertisement.Show("rewardedVideo", options);
-        }
-         else{
-             
-             ShowRewardBasedVideo();
-         }*/
-
-         if(Yodo1U3dMas.IsRewardedAdLoaded()){
-                loadingSpeed=0;
-                Yodo1U3dMas.ShowRewardedAd();
-            }
-
-        
+        ShowRewardBasedVideo();
     }
 
-    private void SetPrivacy(bool gdpr, bool coppa, bool ccpa)
-    {
-        Yodo1U3dMas.SetGDPR(gdpr);
-        Yodo1U3dMas.SetCOPPA(coppa);
-        Yodo1U3dMas.SetCCPA(ccpa);
-    }
+    private RewardedAd _rewardedAd;
+    void InitAdmobRewarded(){
+      if (_rewardedAd != null)
+      {
+            _rewardedAd.Destroy();
+            _rewardedAd = null;
+      }
 
-    private void InitializeSdk()
-    {
-        Yodo1U3dMas.InitializeSdk();
-    }
+      Debug.Log("Loading the rewarded ad.");
 
-    private void SetDelegates()
-    {
-        Yodo1U3dMas.SetInitializeDelegate((bool success, Yodo1U3dAdError error) =>
-        {
-            Debug.Log("[Yodo1 Mas] InitializeDelegate, success:" + success + ", error: \n" + error.ToString());
+      // create our request used to load the ad.
+      var adRequest = new AdRequest();
 
-            if (success)
-            {
-                //StartCoroutine(BannerCoroutine());
-            }
-            else
-            {
-
-            }
-        });
-
-        Yodo1U3dMas.SetBannerAdDelegate((Yodo1U3dAdEvent adEvent, Yodo1U3dAdError error) =>
-        {
-            Debug.Log("[Yodo1 Mas] BannerdDelegate:" + adEvent.ToString() + "\n" + error.ToString());
-            switch (adEvent)
-            {
-                case Yodo1U3dAdEvent.AdClosed:
-                    Debug.Log("[Yodo1 Mas] Banner ad has been closed.");
-                    break;
-                case Yodo1U3dAdEvent.AdOpened:
-                    Debug.Log("[Yodo1 Mas] Banner ad has been shown.");
-                    break;
-                case Yodo1U3dAdEvent.AdError:
-                    Debug.Log("[Yodo1 Mas] Banner ad error, " + error.ToString());
-                    break;
-            }
-        });
-
-        Yodo1U3dMas.SetInterstitialAdDelegate((Yodo1U3dAdEvent adEvent, Yodo1U3dAdError error) =>
-        {
-            Debug.Log("[Yodo1 Mas] InterstitialAdDelegate:" + adEvent.ToString() + "\n" + error.ToString());
-            switch (adEvent)
-            {
-                case Yodo1U3dAdEvent.AdClosed:
-                    Debug.Log("[Yodo1 Mas] Interstital ad has been closed.");
-                    break;
-                case Yodo1U3dAdEvent.AdOpened:
-                    Debug.Log("[Yodo1 Mas] Interstital ad has been shown.");
-                    break;
-                case Yodo1U3dAdEvent.AdError:
-                    Debug.Log("[Yodo1 Mas] Interstital ad error, " + error.ToString());
-                    break;
-            }
-
-        });
-
-        Yodo1U3dMas.SetRewardedAdDelegate((Yodo1U3dAdEvent adEvent, Yodo1U3dAdError error) =>
-        {
-            Debug.Log("[Yodo1 Mas] RewardVideoDelegate:" + adEvent.ToString() + "\n" + error.ToString());
-            switch (adEvent)
-            {
-                case Yodo1U3dAdEvent.AdClosed:
-                    Debug.Log("[Yodo1 Mas] Reward video ad has been closed.");
-                    break;
-                case Yodo1U3dAdEvent.AdOpened:
-                    Debug.Log("[Yodo1 Mas] Reward video ad has shown successful.");
-                    break;
-                case Yodo1U3dAdEvent.AdError:
-                    loadingSpeed=1;
-                    if(PlayerPrefs.GetInt("KeysAt"+Application.loadedLevel.ToString())!=4){
-                        PlayerPrefs.SetInt("KeysAt"+Application.loadedLevel.ToString(),0);  
-                        PlayerPrefs.SetInt("Keykey@"+Application.loadedLevel.ToString(),0);
-                        PlayerPrefs.SetInt("Keykey (1)@"+Application.loadedLevel.ToString(),0);
-                        PlayerPrefs.SetInt("Keykey (2)@"+Application.loadedLevel.ToString(),0);
-                    }
-                    Debug.Log("[Yodo1 Mas] Reward video ad error, " + error);
-                    break;
-                case Yodo1U3dAdEvent.AdReward:
-                    loadingSpeed=0;
-                    Debug.Log("The ad was successfully shown.");
-                    resumed=true;
-                    additionalLifePanel.SetActive(false);
-                    loadingPanel.SetActive(true);
-                    Application.LoadLevel(Application.loadedLevel);
-                    KnightHealthSystem.addCnt=1;
-                    Debug.Log("[Yodo1 Mas] Reward video ad reward, give rewards to the player.");
-                    break;
-            }
-
-        });
-    }
-
-    /*
-    private void HandleShowResult(ShowResult result)
+      // send the request to load the ad.
+      RewardedAd.Load(rewardedId, adRequest,
+          (RewardedAd ad, LoadAdError error) =>
           {
-            switch (result)
-            {
-              case ShowResult.Finished:
-                loadingSpeed=0;
-                Debug.Log("The ad was successfully shown.");
-                resumed=true;
-                additionalLifePanel.SetActive(false);
-                loadingPanel.SetActive(true);
-                Application.LoadLevel(Application.loadedLevel);
-                KnightHealthSystem.addCnt=1;
-                
-                break;
-
-              case ShowResult.Skipped:
-                loadingSpeed=1;
-                if(PlayerPrefs.GetInt("KeysAt"+Application.loadedLevel.ToString())!=4){
-                    PlayerPrefs.SetInt("KeysAt"+Application.loadedLevel.ToString(),0);  
-                    PlayerPrefs.SetInt("Keykey@"+Application.loadedLevel.ToString(),0);
-                    PlayerPrefs.SetInt("Keykey (1)@"+Application.loadedLevel.ToString(),0);
-                    PlayerPrefs.SetInt("Keykey (2)@"+Application.loadedLevel.ToString(),0);
-                }
-                
-
-                Debug.Log("The ad was skipped before reaching the end.");
-                break;
-
-              case ShowResult.Failed:
-                loadingSpeed=1;
-                if(PlayerPrefs.GetInt("KeysAt"+Application.loadedLevel.ToString())!=4){
-                    PlayerPrefs.SetInt("KeysAt"+Application.loadedLevel.ToString(),0);  
-                    PlayerPrefs.SetInt("Keykey@"+Application.loadedLevel.ToString(),0);
-                    PlayerPrefs.SetInt("Keykey (1)@"+Application.loadedLevel.ToString(),0);
-                    PlayerPrefs.SetInt("Keykey (2)@"+Application.loadedLevel.ToString(),0);
-                }
-                Debug.LogError("The ad failed to be shown.");
-                break;
-            }
-          }
-
-
-
-    private RewardBasedVideoAd rewardBasedVideo;
-    void InitAdmob(){
-        this.rewardBasedVideo = RewardBasedVideoAd.Instance;
-     // RewardBasedVideoAd is a singleton, so handlers should only be registered once.
-        this.rewardBasedVideo.OnAdLoaded += this.HandleRewardBasedVideoLoaded;
-        this.rewardBasedVideo.OnAdFailedToLoad += this.HandleRewardBasedVideoFailedToLoad;
-        this.rewardBasedVideo.OnAdOpening += this.HandleRewardBasedVideoOpened;
-        this.rewardBasedVideo.OnAdStarted += this.HandleRewardBasedVideoStarted;
-        this.rewardBasedVideo.OnAdRewarded += this.HandleRewardBasedVideoRewarded;
-        this.rewardBasedVideo.OnAdClosed += this.HandleRewardBasedVideoClosed;
-        this.rewardBasedVideo.OnAdLeavingApplication += this.HandleRewardBasedVideoLeftApplication;
-
-        RequestRewardBasedVideo();
+              // if error is not null, the load request failed.
+              if (error != null || ad == null)
+              {
+                  return;
+              }
+              _rewardedAd = ad;
+              RegisterReloadHandler(_rewardedAd);
+              RegisterEventHandlers(_rewardedAd);
+          });
     }
-    public void Clickonrewardreqest()
+
+    private bool ShowRewardBasedGoogleVideo()
     {
-        this.RequestRewardBasedVideo ();
-        //Debug.Log ("s");
-    }
-    public void Clickonrewardshow()
-    {
-        this.ShowRewardBasedVideo ();
-    }
-    private void RequestRewardBasedVideo()
-    {
-        string adUnitId = "ca-app-pub-4962234576866611/2507076120";
-        rewardBasedVideo.LoadAd (new AdRequest.Builder ().Build (), adUnitId);
-    }
-    private void ShowRewardBasedVideo()
-    {
-        if (this.rewardBasedVideo.IsLoaded())
+      const string rewardMsg =
+        "Rewarded ad rewarded the user";
+
+        if (_rewardedAd != null && _rewardedAd.CanShowAd())
         {
             loadingSpeed=0;
-            this.rewardBasedVideo.Show();
+            _rewardedAd.Show((Reward reward) =>
+            {
+              Success();
+            });
+
+            return true;
         }
-        else
-        {
-            // if (Advertisement.IsReady("rewardedVideo"))
-            // {
-            //     loadingSpeed=0;
-            //     var options = new ShowOptions { resultCallback = HandleShowResult };
-            //     Advertisement.Show("rewardedVideo", options);
-            // }
-            
-            MonoBehaviour.print("Reward based video ad is not ready yet");
-        }
+
+        return false;
     }
-    
-    public void HandleRewardBasedVideoLoaded(object sender, EventArgs args)
+
+    private void RegisterEventHandlers(RewardedAd ad)
     {
-        MonoBehaviour.print("HandleRewardBasedVideoLoaded event received");
-    }
-    public void HandleRewardBasedVideoFailedToLoad(object sender, AdFailedToLoadEventArgs args)
-    {
+      // Raised when the ad is estimated to have earned money.
+      ad.OnAdPaid += (AdValue adValue) =>
+      {
+          Success();
+      };
+      // Raised when an impression is recorded for an ad.
+      ad.OnAdImpressionRecorded += () =>
+      {
+          Debug.Log("Rewarded ad recorded an impression.");
+      };
+      // Raised when a click is recorded for an ad.
+      ad.OnAdClicked += () =>
+      {
+          Debug.Log("Rewarded ad was clicked.");
+      };
+      // Raised when an ad opened full screen content.
+      ad.OnAdFullScreenContentOpened += () =>
+      {
+          Debug.Log("Rewarded ad full screen content opened.");
+      };
+      // Raised when the ad closed full screen content.
+      ad.OnAdFullScreenContentClosed += () =>
+      {
+          Debug.Log("Rewarded ad full screen content closed.");
+      };
+      // Raised when the ad failed to open full screen content.
+      ad.OnAdFullScreenContentFailed += (AdError error) =>
+      {
         loadingSpeed=1;
         if(PlayerPrefs.GetInt("KeysAt"+Application.loadedLevel.ToString())!=4){
             PlayerPrefs.SetInt("KeysAt"+Application.loadedLevel.ToString(),0);  
@@ -338,30 +195,34 @@ public class KnightUI : MonoBehaviour
             PlayerPrefs.SetInt("Keykey (1)@"+Application.loadedLevel.ToString(),0);
             PlayerPrefs.SetInt("Keykey (2)@"+Application.loadedLevel.ToString(),0);
         }
-        MonoBehaviour.print(
-            "HandleRewardBasedVideoFailedToLoad event received with message: " + args.Message);
-    }
-    public void HandleRewardBasedVideoOpened(object sender, EventArgs args)
+      };
+  }
+
+  private void RegisterReloadHandler(RewardedAd ad)
+  {
+      // Raised when the ad closed full screen content.
+      ad.OnAdFullScreenContentClosed += () =>
+      {
+          Debug.Log("Rewarded Ad full screen content closed.");
+          // Reload the ad so that we can show another as soon as possible.
+          InitAdmobRewarded();
+      };
+      // Raised when the ad failed to open full screen content.
+      ad.OnAdFullScreenContentFailed += (AdError error) =>
+      {
+          Debug.LogError("Rewarded ad failed to open full screen content " +
+                        "with error : " + error);
+          // Reload the ad so that we can show another as soon as possible.
+          InitAdmobRewarded();
+      };
+  }
+
+    private bool ShowRewardBasedVideo()
     {
-        MonoBehaviour.print("HandleRewardBasedVideoOpened event received");
+        return ShowRewardBasedGoogleVideo();
     }
-    public void HandleRewardBasedVideoStarted(object sender, EventArgs args)
-    {
-        MonoBehaviour.print("HandleRewardBasedVideoStarted event received");
-    }
-    public void HandleRewardBasedVideoClosed(object sender, EventArgs args)
-    {
-        loadingSpeed=1;
-        if(PlayerPrefs.GetInt("KeysAt"+Application.loadedLevel.ToString())!=4){
-            PlayerPrefs.SetInt("KeysAt"+Application.loadedLevel.ToString(),0);  
-            PlayerPrefs.SetInt("Keykey@"+Application.loadedLevel.ToString(),0);
-            PlayerPrefs.SetInt("Keykey (1)@"+Application.loadedLevel.ToString(),0);
-            PlayerPrefs.SetInt("Keykey (2)@"+Application.loadedLevel.ToString(),0);
-        }
-        MonoBehaviour.print("HandleRewardBasedVideoClosed event received");
-    }
-    public void HandleRewardBasedVideoRewarded(object sender, Reward args)
-    {
+
+    public void Success(){
         loadingSpeed=0;
         Debug.Log("The ad was successfully shown.");
         resumed=true;
@@ -370,20 +231,5 @@ public class KnightUI : MonoBehaviour
         Application.LoadLevel(Application.loadedLevel);
         KnightHealthSystem.addCnt=1;
     }
-    public void HandleRewardBasedVideoLeftApplication(object sender, EventArgs args)
-    {
-        loadingSpeed=1;
-        if(PlayerPrefs.GetInt("KeysAt"+Application.loadedLevel.ToString())!=4){
-            PlayerPrefs.SetInt("KeysAt"+Application.loadedLevel.ToString(),0);  
-            PlayerPrefs.SetInt("Keykey@"+Application.loadedLevel.ToString(),0);
-            PlayerPrefs.SetInt("Keykey (1)@"+Application.loadedLevel.ToString(),0);
-            PlayerPrefs.SetInt("Keykey (2)@"+Application.loadedLevel.ToString(),0);
-        }
-                
-
-        Debug.Log("The ad was skipped before reaching the end.");
-        MonoBehaviour.print("HandleRewardBasedVideoLeftApplication event received");
-    }
-    */
 }
 

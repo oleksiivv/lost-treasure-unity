@@ -17,8 +17,8 @@ public class KnightUI : MonoBehaviour
     public Image[] hearts;
 
 #if UNITY_IOS
-    private string appId = "ca-app-pub-4962234576866611~2451698824";
-    private string rewardedId = "ca-app-pub-4962234576866611/8362419131";
+    private string appId = "ca-app-pub-4962234576866611~7807718464";
+    private string rewardedId = "ca-app-pub-4962234576866611/2363820094";
 #else
     private string appId = "ca-app-pub-4962234576866611~2451698824";
     private string rewardedId = "ca-app-pub-4962234576866611/8362419131";

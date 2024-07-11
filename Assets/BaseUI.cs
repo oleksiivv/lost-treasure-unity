@@ -16,8 +16,8 @@ public class BaseUI : MonoBehaviour
     }
 
 #if UNITY_IOS
-    private string appId = "ca-app-pub-4962234576866611~2451698824";
-    private string bannerId="ca-app-pub-4962234576866611/9839152333";
+    private string appId = "ca-app-pub-4962234576866611~7807718464";
+    private string bannerId="ca-app-pub-4962234576866611/4259688833";
 #else
     private string appId = "ca-app-pub-4962234576866611~2451698824";
     private string bannerId="ca-app-pub-4962234576866611/9839152333";

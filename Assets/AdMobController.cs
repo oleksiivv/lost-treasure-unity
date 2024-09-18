@@ -22,8 +22,8 @@ public class AdMobController : MonoBehaviour
         MobileAds.SetRequestConfiguration(requestConfiguration);
 
         MobileAds.Initialize(initStatus => {
-          CreateBannerView();
-          LoadBannerAd();
+          //CreateBannerView();
+          //LoadBannerAd();
         });
     }
 

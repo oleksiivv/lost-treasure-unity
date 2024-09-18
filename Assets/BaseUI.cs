@@ -31,8 +31,8 @@ public class BaseUI : MonoBehaviour
         MobileAds.SetRequestConfiguration(requestConfiguration);
 
         MobileAds.Initialize(initStatus => {
-          CreateBannerView();
-          LoadBannerAd();
+          //CreateBannerView();
+          //LoadBannerAd();
         });
     }
 

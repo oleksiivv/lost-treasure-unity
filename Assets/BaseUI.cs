@@ -25,6 +25,9 @@ public class BaseUI : MonoBehaviour
 
     private BannerView _bannerView;
     void Start(){
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+        
         RequestConfiguration requestConfiguration =
             new RequestConfiguration.Builder()
             .SetSameAppKeyEnabled(true).build();

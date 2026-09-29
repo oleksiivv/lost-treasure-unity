@@ -19,9 +19,11 @@ public class KnightUI : MonoBehaviour
 #if UNITY_IOS
     private string appId = "ca-app-pub-4962234576866611~7807718464";
     private string rewardedId = "ca-app-pub-4962234576866611/2363820094";
+    private string intersitionalId = "ca-app-pub-4962234576866611/9623578539";
 #else
     private string appId = "ca-app-pub-4962234576866611~2451698824";
     private string rewardedId = "ca-app-pub-4962234576866611/8362419131";
+    private string intersitionalId = "ca-app-pub-4962234576866611/9623578539";
 #endif
 
     private BannerView _bannerView;
@@ -42,6 +44,8 @@ public class KnightUI : MonoBehaviour
 
         MobileAds.Initialize(initStatus => {
           InitAdmobRewarded();
+
+          LoadLoadInterstitialAd();
         });
     }
 
@@ -87,6 +91,8 @@ public class KnightUI : MonoBehaviour
                 PlayerPrefs.SetInt("Keykey (1)@"+Application.loadedLevel.ToString(),0);
                 PlayerPrefs.SetInt("Keykey (2)@"+Application.loadedLevel.ToString(),0);
         }
+
+        showIntersitionalGoogleAd();
     }
 
     private bool resumed=false;
@@ -231,5 +237,62 @@ public class KnightUI : MonoBehaviour
         Application.LoadLevel(Application.loadedLevel);
         KnightHealthSystem.addCnt=1;
     }
+
+    private InterstitialAd _interstitialAd;
+    
+    public void LoadLoadInterstitialAd()
+    {
+        // Clean up the old ad before loading a new one.
+        if (_interstitialAd != null)
+        {
+                _interstitialAd.Destroy();
+                _interstitialAd = null;
+        }
+
+        Debug.Log("Loading the interstitial ad.");
+
+        // create our request used to load the ad.
+        var adRequest = new AdRequest();
+
+        // send the request to load the ad.
+        InterstitialAd.Load(intersitionalId, adRequest,
+            (InterstitialAd ad, LoadAdError error) =>
+            {
+                // if error is not null, the load request failed.
+                if (error != null || ad == null)
+                {
+                    Debug.LogError("interstitial ad failed to load an ad " +
+                                    "with error : " + error);
+                    return;
+                }
+
+                Debug.Log("Interstitial ad loaded with response : "
+                            + ad.GetResponseInfo());
+
+                _interstitialAd = ad;
+            });
+    }
+
+private static int adsCnt=1;
+
+      public bool showIntersitionalGoogleAd(){
+        addCnt++;
+        if (addCnt%2 != 0)
+        {
+            return false;
+        }
+        
+        if (_interstitialAd != null && _interstitialAd.CanShowAd())
+        {
+            _interstitialAd.Show();
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+      }
+
 }
 
